@@ -1,0 +1,15 @@
+*.vscode
+/CMakeFiles
+/Debug
+/demo.dir
+/x64
+*.vcxproj
+*.vcxproj*
+cmake_install.cmake
+CMakeCache.txt
+*.sln
+*.vs
+
+/DX11Content.dir
+/Debug
+/CMakeFiles
