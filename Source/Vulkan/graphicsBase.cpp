@@ -27,7 +27,7 @@ bool graphicsBase::InitGraphics(HWND hwnd, HINSTANCE hinstance,uint32_t width,ui
 {
 
 	this->hwnd = hwnd;
-	this->hinstance;
+	this->hinstance = hinstance;
 	this->width = width;
 	this->height = height;
 	this->window = window;
@@ -120,8 +120,10 @@ bool graphicsBase::InitGraphics(HWND hwnd, HINSTANCE hinstance,uint32_t width,ui
 	createCommandPool();
 	createCommandBuffer();
 	createSyncObjects();
-
 	createVKInitData();
+
+	shaderManager.LoadShader(device);
+
 	return true;
 }
 
@@ -150,6 +152,11 @@ void graphicsBase::Clearup()
 		vkDestroySemaphore(device, renderFinishedSemaphore[i], nullptr);
 	for(int i =0;i < inFlightFence.size(); ++i)
 		vkDestroyFence(device, inFlightFence[i], nullptr);
+
+	shaderManager.DestroyShader();
+
+	for (int i = 0; i < scriptableRenderPasses.size(); ++i)
+		scriptableRenderPasses[i]->CleanVK();
 	
 	vkDestroyCommandPool(device, commandPool, nullptr);
 
@@ -180,18 +187,18 @@ static bool CheckDeviceExtensionSupport(VkPhysicalDevice physicDevice,const vect
 	vkEnumerateDeviceExtensionProperties(physicDevice, nullptr, &extensionCount, avaiableExtensions.data());
 
 	set<std::string> requiredExtensions(extensions.begin(), extensions.end());
-	for (const auto& c : requiredExtensions)
+	/*for (const auto& c : requiredExtensions)
 	{
 		std::cout << c << std::endl;
-	}
+	}*/
 	for (const auto& extension : avaiableExtensions)
 	{
 		requiredExtensions.erase(extension.extensionName);
 	}
-	for (const auto& c : avaiableExtensions)
+	/*for (const auto& c : avaiableExtensions)
 	{
 		std::cout<< c.extensionName << std::endl;
-	}
+	}*/
 	return requiredExtensions.empty();
 }
 
@@ -267,6 +274,7 @@ void graphicsBase::destroyDebugLayer()
 
 QueueFamilyIndices graphicsBase::findQueueFamilies(VkPhysicalDevice device, VkQueueFlagBits queueflag = VK_QUEUE_GRAPHICS_BIT)
 {
+	// queueflag == VK_QUEUE_GRAPHICS_BIT 会自动拥有转换队列的能力
 	QueueFamilyIndices indices;
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -1061,4 +1069,43 @@ void graphicsBase::drawFrameWithPass()
 	vkQueuePresentKHR(presentQueue, &presentInfo);
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void graphicsBase::transformVertexBuffer()
+{
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	for (int i = 0; i < scriptableRenderPasses.size(); ++i)
+	{
+		scriptableRenderPasses[i]->CreateBuffer(commandBuffer);
+	}
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.commandBufferCount = 1;
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(graphicsQueue);
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+
+	for (int i = 0; i < scriptableRenderPasses.size(); ++i)
+	{
+		scriptableRenderPasses[i]->ClearTempBuffer();
+	}
 }

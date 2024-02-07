@@ -28,3 +28,9 @@ void RenderPassBase::CreateSyncObjects(const VKInitData* vkData)
 
 void RenderPassBase::ExcutePass(const VKInitData*, VkCommandBuffer& commandBuffer)
 {}
+
+void RenderPassBase::CreateBuffer(const VkCommandBuffer& commandBuffer)
+{}
+
+void RenderPassBase::ClearTempBuffer() 
+{}

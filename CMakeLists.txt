@@ -21,10 +21,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Source)
 aux_source_directory(. DIR_SRCS)
 aux_source_directory(./Source DIR_SRCS)
 
-message(${ALL_SOURCES})
 
 add_executable(${PROJECT_NAME} ${DIR_SRCS} ${ALL_INCLUDES} ${ALL_VULKAN} ${ALL_SOURCES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+target_compile_definitions(${PROJECT_NAME} PUBLIC PLATFORM_WINDOWS)
 
 target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/thirdPart/glfw/include)
 target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/thirdPart/VulkanSDK/1.3.275.0/Include)

@@ -20,49 +20,30 @@ void vertexRenderPass::CreateVkData(const VKInitData* vkData)
 	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;	// 一个Buffer可以被多个队列拥有
 
-	if(vkCreateBuffer(*vkData->device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create vertex buffer!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(*vkData->device, vertexBuffer, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = GraphicsUtils::findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, *vkData->physicalDevice);
-	
-	if(vkAllocateMemory(*vkData->device, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to allocate vertex buffer memory!");
-	}
-
-	vkBindBufferMemory(*vkData->device, vertexBuffer, vertexBufferMemory, 0);
+	GraphicsUtils::createBuffer(*vkData->device, *vkData->physicalDevice, sizeof(VertexPositionColor) * vertices.size(),
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
 
 	// 通过Map的方式将数据拷贝到显存中，但是并不会立即执行，因为可能正在Caching
 	/*
-	*	You can now simply memcpy the vertex data to the mapped memory and unmap it again using vkUnmapMemory. 
-		Unfortunately the driver may not immediately copy the data into the buffer memory, for example because of caching. 
+	*	You can now simply memcpy the vertex data to the mapped memory and unmap it again using vkUnmapMemory.
+		Unfortunately the driver may not immediately copy the data into the buffer memory, for example because of caching.
 		It is also possible that writes to the buffer are not visible in the mapped memory yet. There are two ways to deal with that problem:
 		Use a memory heap that is host coherent, indicated with VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		Call vkFlushMappedMemoryRanges after writing to the mapped memory, and call vkInvalidateMappedMemoryRanges before reading from the mapped memory
 	*/
 	void* data;
-	vkMapMemory(*vkData->device, vertexBufferMemory, 0, bufferInfo.size, 0, &data);
+	vkMapMemory(*vkData->device, stagingBufferMemory, 0, bufferInfo.size, 0, &data);
 	memcpy(data, vertices.data(), bufferInfo.size);
-	vkUnmapMemory(*vkData->device, vertexBufferMemory);
+	vkUnmapMemory(*vkData->device, stagingBufferMemory);
 
-	// shader源码不必缓存，编译完就没有用了
-	// TODO: 搞一个源码预编译，包体里不含有源码信息
-	vector<char> vertShaderCode;
-	vector<char> fragShaderCode;
-	GraphicsUtils::readFile("D:/project/DX11/Shader/Vert.spv", vertShaderCode);
-	GraphicsUtils::readFile("D:/project/DX11/Shader/Fragment.spv", fragShaderCode);
-	
-	GraphicsUtils::createShaderModule(*vkData->device, vertShaderCode, vertexShaderModule);
-	GraphicsUtils::createShaderModule(*vkData->device, fragShaderCode, fragmentShaderModule);
+	GraphicsUtils::createBuffer(*vkData->device, *vkData->physicalDevice, sizeof(VertexPositionColor) * vertices.size(),
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		vertexBuffer, vertexBufferMemory);
 
+	vertexShaderModule = shaderManager.GetShaderModule("vert.spv");
+	fragmentShaderModule = shaderManager.GetShaderModule("fragment.spv");
 
 	// VkPipelineLayout pipelineLayout;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -76,13 +57,15 @@ void vertexRenderPass::CreateVkData(const VKInitData* vkData)
 	{
 		throw std::runtime_error("create pipeline layout error");
 	}
-
+	
 	CreateVkRenderPass(vkData);
 	CreateVkGraphicsPipeline(vkData);
+	vkDestroyPipelineLayout(*vkData->device, pipelineLayout, nullptr);
 }
 
 void vertexRenderPass::CleanVK()
 {
+	vkDestroyRenderPass(*vkInitData->device, vkRenderPass, nullptr);
 	vkDestroyPipeline(*vkInitData->device, vkGraphicsPipeline, nullptr);
 	vkDestroyBuffer(*vkInitData->device, vertexBuffer, nullptr);
 	vkFreeMemory(*vkInitData->device, vertexBufferMemory, nullptr);
@@ -234,6 +217,21 @@ void vertexRenderPass::CreateFrameBuffer(const VKInitData* vkData)
 	frameBuffers.insert({ vkData->curretFrameIndex, frameBuffer });
 }
 
+void vertexRenderPass::CreateBuffer(const VkCommandBuffer& commandBuffer)
+{
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = sizeof(VertexPositionColor) * vertices.size();
+	vkCmdCopyBuffer(commandBuffer, stagingBuffer, vertexBuffer, 1, &copyRegion);
+}
+
+void vertexRenderPass::ClearTempBuffer()
+{
+	vkDestroyBuffer(*vkInitData->device, stagingBuffer, nullptr);
+	vkFreeMemory(*vkInitData->device, stagingBufferMemory, nullptr);
+}
+
 void vertexRenderPass::ExcutePass(const VKInitData* vkInitData, VkCommandBuffer& commandBuffer)
 {
 	CreateFrameBuffer(vkInitData);
@@ -242,17 +240,17 @@ void vertexRenderPass::ExcutePass(const VKInitData* vkInitData, VkCommandBuffer&
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassBeginInfo.framebuffer = frameBuffers[vkInitData->curretFrameIndex];
 	renderPassBeginInfo.clearValueCount = 1;
-	VkClearValue clearColor = { {{0.0f, 1.0f, 0.0f, 1.0f}} };
+	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
 	renderPassBeginInfo.pClearValues = &clearColor;
 	renderPassBeginInfo.renderPass = vkRenderPass;
 	renderPassBeginInfo.renderArea = { 0, 0, vkInitData->width, vkInitData->height };
 	VkDeviceSize offsets[] = { 0 };
-
+	
 	vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 	
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vkGraphicsPipeline);
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+	
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);
-	
 }

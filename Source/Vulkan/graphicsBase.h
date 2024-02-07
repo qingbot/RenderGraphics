@@ -8,6 +8,7 @@
 #include"graphicsUtils.h"
 #include"vertex.h"
 #include"renderPassBase.h"
+#include"shaderManager.h"
 
 using std::vector;
 using std::set;
@@ -46,6 +47,8 @@ public:
 	bool InitGraphics(HWND hwnd, HINSTANCE hinstance, uint32_t width,uint32_t height, GLFWwindow* window);
 	void Clearup();
 
+	// 用以向专用显存提交数据
+	void transformVertexBuffer();
 	void drawFrame();
 	void drawFrameWithPass();
 

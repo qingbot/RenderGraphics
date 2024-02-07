@@ -19,5 +19,8 @@ namespace GraphicsUtils
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice);
 
 	void createShaderModule(VkDevice device, const vector<char>& code, VkShaderModule& shaderModule);
+
+	void createBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size,
+		VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 }
 #endif // !GRAPHICS_UTILS_H

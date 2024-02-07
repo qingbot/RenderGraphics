@@ -33,6 +33,10 @@ int main()
     vertexRenderPass vertexRenderPass;
     graphics.EnqueueRenderPass(&vertexRenderPass);
 
+    graphics.transformVertexBuffer();
+
+    std::cout << "start draw" << std::endl;
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -40,7 +44,7 @@ int main()
         // graphics.drawFrame();
     }
     
-    vertexRenderPass.CleanVK();
+    // vertexRenderPass.CleanVK();
     glfwDestroyWindow(window);
     glfwTerminate();
     graphics.Clearup();

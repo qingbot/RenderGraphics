@@ -32,6 +32,9 @@ public:
 	// 清理
 	virtual void CleanVK();
 
+	virtual void CreateBuffer(const VkCommandBuffer& commandBuffer);
+	virtual void ClearTempBuffer();
+
 	virtual void ExcutePass(const VKInitData*, VkCommandBuffer& commandBuffer);
 
 
@@ -54,7 +57,9 @@ protected:
 	// 创建Semaphores
 	virtual void CreateSyncObjects(const VKInitData*);
 
+	
 public:
+
 	static const VkPipelineMultisampleStateCreateInfo* Get1xMultisampleStateCreateInfo() {
 		static VkPipelineMultisampleStateCreateInfo defaultMultisampleStateCreateInfo = {
 			VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
@@ -89,7 +94,7 @@ public:
 			VK_FALSE,
 			VK_FALSE,
 			VK_POLYGON_MODE_FILL,
-			VK_CULL_MODE_BACK_BIT,
+			VK_CULL_MODE_NONE,		// 不进行任何面的剔除
 			VK_FRONT_FACE_COUNTER_CLOCKWISE,
 			VK_FALSE,
 			0.0f,
@@ -146,4 +151,5 @@ public:
 		return &defaultDepthStencilStateCreateInfo;
 	}
 
+	
 };
