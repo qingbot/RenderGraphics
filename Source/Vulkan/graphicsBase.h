@@ -9,6 +9,7 @@
 #include"vertex.h"
 #include"renderPassBase.h"
 #include"shaderManager.h"
+#include "spdlog/spdlog.h"
 
 using std::vector;
 using std::set;

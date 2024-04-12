@@ -7,6 +7,7 @@
 #include "vulkan/vulkan.h"
 #include "Source/Vulkan/graphicsBase.h"
 #include "Source/Vulkan/vertexRenderPass.h"
+#include "spdlog/spdlog.h"
 // using namespace std;
 
 void InitVulkan();
@@ -35,13 +36,12 @@ int main()
 
     graphics.transformVertexBuffer();
 
-    std::cout << "start draw" << std::endl;
+    spdlog::info("Start Draw");
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
         graphics.drawFrameWithPass();
-        // graphics.drawFrame();
     }
     
     // vertexRenderPass.CleanVK();
@@ -65,10 +65,10 @@ void windowFocusCallback(GLFWwindow* window, int focused)
 {
 	if (focused)
 	{
-		std::cout << "window focused" << std::endl;
+        spdlog::info("window focused");
 	}
 	else
 	{
-		std::cout << "window unfocused" << std::endl;
+		spdlog::info("window unfocused");
 	}
 }

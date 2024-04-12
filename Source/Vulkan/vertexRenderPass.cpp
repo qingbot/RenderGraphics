@@ -73,7 +73,6 @@ void vertexRenderPass::CleanVK()
 	{
 		vkDestroyFramebuffer(*vkInitData->device, i->second, nullptr);
 	}
-	// vkDestroyFramebuffer(*vkInitData->device, frameBuffer, nullptr);
 }
 
 void vertexRenderPass::CreateVkRenderPass(const VKInitData* vkData)
@@ -186,7 +185,7 @@ void vertexRenderPass::CreateVkGraphicsPipeline(const VKInitData* vkData)
 	
 	pipelineInfo.layout = pipelineLayout;
 	pipelineInfo.renderPass = vkRenderPass;
-	pipelineInfo.subpass = 0;
+	pipelineInfo.subpass = 0;		// 这个是指定渲染pass的subpass，如果只有一个subpass，那么就是0
 	
 	if (vkCreateGraphicsPipelines(*vkData->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &vkGraphicsPipeline) != VK_SUCCESS)
 		throw std::runtime_error("create graphics pipeline error");

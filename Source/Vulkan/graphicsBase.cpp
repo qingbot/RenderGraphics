@@ -174,7 +174,6 @@ void graphicsBase::Clearup()
 	vkDestroySurfaceKHR(vkinstance, surface, nullptr);
 	// destroySurface();
 	vkDestroyInstance(vkinstance, nullptr);
-	
 }
 
 // 判断给定物理设备是否支持拓展
@@ -258,8 +257,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL graphicsBase::debugCallback(
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData) {
 
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
+	spdlog::warn("validation layer: {}", pCallbackData->pMessage);
 	return VK_FALSE;
 }
 

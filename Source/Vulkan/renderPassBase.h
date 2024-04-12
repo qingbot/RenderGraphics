@@ -45,12 +45,7 @@ protected:
 	const VKInitData* vkInitData;
 
 protected:
-	// 创建RenderPass
-	virtual void CreateVkRenderPass(const VKInitData*);
-
-	// 创建GraphicsPipeline
-	virtual void CreateVkGraphicsPipeline(const VKInitData*);
-
+	
 	// 创建CommandBuffer
 	virtual void CreateCommandBuffer(const VKInitData*);
 

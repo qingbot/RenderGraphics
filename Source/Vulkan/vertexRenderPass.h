@@ -14,6 +14,7 @@ public:
 
 	void CleanVK() override;
 
+	void CreateVkData(const VKInitData*) override;
 	void ExcutePass(const VKInitData*, VkCommandBuffer& commandBuffer) override;
 
 	void CreateBuffer(const VkCommandBuffer& commandBuffer) override;
@@ -40,11 +41,10 @@ protected:
 	VkShaderModule fragmentShaderModule;
 	// VkShaderModule 
 	
-	void CreateVkData(const VKInitData*) override;
 
-	void CreateVkRenderPass(const VKInitData*) override;
+	void CreateVkRenderPass(const VKInitData*);
 
-	void CreateVkGraphicsPipeline(const VKInitData*) override;
+	void CreateVkGraphicsPipeline(const VKInitData*);
 
 	void CreateFrameBuffer(const VKInitData*);
 };

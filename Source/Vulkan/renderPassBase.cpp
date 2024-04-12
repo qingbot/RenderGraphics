@@ -10,13 +10,13 @@ void RenderPassBase::CleanVK()
 {
 }
 
-void RenderPassBase::CreateVkRenderPass(const VKInitData* vkData)
-{
-}
-
-void RenderPassBase::CreateVkGraphicsPipeline(const VKInitData* vkData)
-{
-}
+// void RenderPassBase::CreateVkRenderPass(const VKInitData* vkData)
+// {
+// }
+//
+// void RenderPassBase::CreateVkGraphicsPipeline(const VKInitData* vkData)
+// {
+// }
 
 void RenderPassBase::CreateCommandBuffer(const VKInitData* vkData)
 {

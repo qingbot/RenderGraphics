@@ -7,12 +7,12 @@ void ShaderManager::LoadShader(const VkDevice& device)
 	this->device = device;
 	for (const auto& entry : std::filesystem::directory_iterator(shaderPath))
 	{
-		if (entry.path().extension() == ".spv")
+		if (entry.path().extension() == SHADER_FILE_EXTENSION)
 		{
 
 			if (allShaders.find(entry.path().filename().string().c_str()) != allShaders.end())
 			{
-				std::cout << "ShaderManager: " << entry.path().filename() << " already exist!" << std::endl;
+				spdlog::info("ShaderManager: {0} already exist!", entry.path().filename().string());
 				continue;
 			}
 			vector<char> data;
@@ -26,17 +26,15 @@ void ShaderManager::LoadShader(const VkDevice& device)
 			VkShaderModule shaderModule;
 			if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
 			{
-				std::cout<< "ShaderManager::"<<entry.path().filename() << " failed to create shader module!" << std::endl;
+				spdlog::error("ShaderManager:: {} failed to create shader module", entry.path().filename().string());
 			}
 			else {
-				std::cout<< "ShaderManager::"<<entry.path().filename().string() << " create shader module success!" << std::endl;
+				spdlog::info("ShaderManager::{} create shader module success!", entry.path().filename().string());
 				allShaders[entry.path().filename().string()] = shaderModule;
-				// allShaders.insert({ entry.path().filename().string().c_str() ,shaderModule });
 			}
 			data.clear();
 		}
 	}
-
 }
 
 void ShaderManager::DestroyShader()
@@ -49,12 +47,12 @@ void ShaderManager::DestroyShader()
 
 ShaderManager::ShaderManager()
 {
-	std::cout<< "ShaderManager::ShaderManager()" << std::endl;
+	spdlog::info("ShaderManager::ShaderManager()");
 }
 
 ShaderManager::~ShaderManager()
 {
-	std::cout<< "ShaderManager::~ShaderManager()" << std::endl;
+	spdlog::info("ShaderManager::~ShaderManager()");
 }
 
 VkShaderModule ShaderManager::GetShaderModule(const char* shaderName) const
@@ -66,7 +64,7 @@ VkShaderModule ShaderManager::GetShaderModule(const char* shaderName) const
 	}
 	else
 	{
-		std::cout << "ShaderManager::" << shaderName << " not found!" << std::endl;
+		spdlog::error("ShaderManager::{} not found!", shaderName);
 		return VK_NULL_HANDLE;
 	}
 }

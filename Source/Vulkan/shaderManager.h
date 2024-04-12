@@ -9,10 +9,13 @@
 #include<string>
 #include<Vulkan/vulkan.h>
 #include"graphicsUtils.h"
+#include "spdlog/spdlog.h"
+
 
 using std::map;
 
 #define MAX_SHADER_NAME_LENGTH 64
+#define SHADER_FILE_EXTENSION ".spv"
 
 static const char* shaderPath = "D:/project/DX11/Shader/";
 
@@ -35,6 +38,6 @@ private:
 	std::map<std::string, VkShaderModule> allShaders;
 	VkDevice device;
 };
+
 extern ShaderManager shaderManager;
-// ShaderManager shaderManager;
 #endif // !SHADER_MANAGER_INCLUDE
